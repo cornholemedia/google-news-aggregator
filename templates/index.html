@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Midwest News Aggregator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .source { font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Midwest Local & Fun News</h1>
+    <p>Midwest News</p>
+    <ul>
+    {% for item in news %}
+        <li>
+            <a href="{{ item.url }}">{{ item.title }}</a><br>
+            {{ item.description }}<br>
+            <small class="source">From {{ item.source }} ({{ item.published[:10] }})</small>
+        </li>
+    {% endfor %}
+    </ul>
+    {% if not news %}
+        <p>No fresh stories right now—refresh for updates!</p>
+    {% endif %}
+</body>
+</html>
