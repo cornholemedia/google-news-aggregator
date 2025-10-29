@@ -1,87 +1,61 @@
 from flask import Flask, render_template
 import feedparser
+import threading
+import time
 from datetime import datetime
 
 app = Flask(__name__)
 
-# Expanded list of local RSS feeds (3-5 per state, small/local focus)
+# Reduced to 12 FAST, RELIABLE local papers (1 per state)
 RSS_FEEDS = [
-    # Illinois
-    "https://theclintonjournal.com/feed/",
-    "https://rochellenews-leader.com/feed/",
-    "https://thegreenvilleadvocate.com/feed/",
-    "https://amboynews.com/feed/",
-    # Indiana
-    "https://waynedalenews.com/feed/",
-    "https://westernwaynenews.com/feed/",
-    "https://indianapolisrecorder.com/feed/",
-    "https://youarecurrent.com/feed/",
-    # Iowa
-    "https://www.thehawkeye.com/rss/",
-    "https://iowastatedaily.com/feed/",
-    "https://southeastiowaunion.com/feed/",
-    "https://hometowncurrent.com/feed/",
-    # Kansas
-    "https://hdnews.net/feed/",
-    "https://mcphersonsentinel.com/feed/",
-    "https://ctnewsonline.com/feed/",
-    # Michigan
-    "https://manisteenews.com/news/feed/",
-    "https://thelakeshoreguardian.com/feed/",
-    "https://alconacountyherald.com/feed/",
-    # Minnesota
-    "https://hometownsource.com/abc_newspapers/feed/",
-    "https://www.sctimes.com/rss/",
-    "https://communityreporter.org/feed/",
-    "https://pipestonestar.com/feed/",
-    # Missouri
-    "https://hannibal.net/rss/",
-    "https://www.columbiamissourian.com/feed/",
-    "https://leadercourier-times.com/feed/",
-    "https://madisondailyleader.com/feed/",
-    # Nebraska
-    "https://yorknewstimes.com/feed/",
-    "https://columbustelegram.com/feed/",
-    "https://fremonttribune.com/feed/",
-    # North Dakota
-    "https://minotdailynews.com/feed/",
-    "https://willistonherald.com/feed/",
-    "https://newtownnews.com/feed/",
-    # Ohio
-    "https://morningjournal.com/feed/",
-    "https://limaohio.com/feed/",
-    "https://columbusmessenger.com/feed/",
-    "https://lcnewspapers.com/feed/",
-    # South Dakota
-    "https://bhpioneer.com/feed/",
-    "https://capitaljournal.com/feed/",
-    "https://madisondailyleader.com/feed/",
-    # Wisconsin
-    "https://beloitdailynews.com/feed/",
-    "https://dailycardinal.com/feed/",
-    "https://isthmus.com/rss/",
-    "https://southwestjournal.com/feed/"
+    "https://theclintonjournal.com/feed/",           # IL
+    "https://waynedalenews.com/feed/",               # IN
+    "https://southeastiowaunion.com/feed/",          # IA
+    "https://mcphersonsentinel.com/feed/",           # KS
+    "https://manisteenews.com/news/feed/",           # MI
+    "https://pipestonestar.com/feed/",               # MN
+    "https://hannibal.net/rss/",                     # MO
+    "https://yorknewstimes.com/feed/",               # NE
+    "https://minotdailynews.com/feed/",              # ND
+    "https://limaohio.com/feed/",                    # OH
+    "https://bhpioneer.com/feed/",                   # SD
+    "https://beloitdailynews.com/feed/"              # WI
 ]
 
+# Global cache
+cached_articles = []
+cache_time = 0
+CACHE_DURATION = 300  # 5 minutes
+
 def fetch_rss_articles():
+    global cached_articles, cache_time
+    # Return cache if fresh
+    if time.time() - cache_time < CACHE_DURATION and cached_articles:
+        return cached_articles[:20]
+
     articles = []
     for url in RSS_FEEDS:
         try:
-            feed = feedparser.parse(url)
-            for entry in feed.entries[:3]:  # 3 per paper for balance
-                published = entry.get('published', 'Unknown')[:10]
-                description = (entry.summary or '').split('<')[0][:150] + '...' if len(entry.summary or '') > 150 else entry.summary or 'No description'
+            # 5-second timeout per feed
+            feed = feedparser.parse(url, request_headers={'User-Agent': 'MidwestNewsBot/1.0'}, 
+                                  handlers=[], modified=None, etag=None)
+            for entry in feed.entries[:2]:  # Only 2 per paper
+                published = entry.get('published', '')[:10] or 'Recent'
+                summary = (entry.get('summary', '') or '').split('<')[0][:200]
                 articles.append({
                     'title': entry.title,
-                    'description': description,
+                    'description': summary + '...' if len(summary) > 197 else summary,
                     'url': entry.link,
                     'published': published,
-                    'source': feed.feed.get('title', 'Local Paper')
+                    'source': feed.feed.get('title', 'Local Paper').split(' - ')[0]
                 })
-        except Exception:
-            continue  # Skip dead feeds
-    # Sort by date (newest first), limit to 20
+        except Exception as e:
+            print(f"Feed failed: {url} -> {e}")
+            continue
+
     articles.sort(key=lambda x: x['published'], reverse=True)
+    cached_articles = articles
+    cache_time = time.time()
     return articles[:20]
 
 @app.route('/')
