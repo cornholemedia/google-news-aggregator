@@ -1,47 +1,92 @@
 from flask import Flask, render_template
-from newsapi import NewsApiClient
-import traceback
+import feedparser
+from datetime import datetime
 
 app = Flask(__name__)
 
-# ←←← PASTE YOUR REAL NEWSAPI KEY HERE ←←←
-NEWSAPI_KEY = 'bc5b63dfdb9f40dba73c40f160bf8dce'  # 
+# Expanded list of local RSS feeds (3-5 per state, small/local focus)
+RSS_FEEDS = [
+    # Illinois
+    "https://theclintonjournal.com/feed/",
+    "https://rochellenews-leader.com/feed/",
+    "https://thegreenvilleadvocate.com/feed/",
+    "https://amboynews.com/feed/",
+    # Indiana
+    "https://waynedalenews.com/feed/",
+    "https://westernwaynenews.com/feed/",
+    "https://indianapolisrecorder.com/feed/",
+    "https://youarecurrent.com/feed/",
+    # Iowa
+    "https://www.thehawkeye.com/rss/",
+    "https://iowastatedaily.com/feed/",
+    "https://southeastiowaunion.com/feed/",
+    "https://hometowncurrent.com/feed/",
+    # Kansas
+    "https://hdnews.net/feed/",
+    "https://mcphersonsentinel.com/feed/",
+    "https://ctnewsonline.com/feed/",
+    # Michigan
+    "https://manisteenews.com/news/feed/",
+    "https://thelakeshoreguardian.com/feed/",
+    "https://alconacountyherald.com/feed/",
+    # Minnesota
+    "https://hometownsource.com/abc_newspapers/feed/",
+    "https://www.sctimes.com/rss/",
+    "https://communityreporter.org/feed/",
+    "https://pipestonestar.com/feed/",
+    # Missouri
+    "https://hannibal.net/rss/",
+    "https://www.columbiamissourian.com/feed/",
+    "https://leadercourier-times.com/feed/",
+    "https://madisondailyleader.com/feed/",
+    # Nebraska
+    "https://yorknewstimes.com/feed/",
+    "https://columbustelegram.com/feed/",
+    "https://fremonttribune.com/feed/",
+    # North Dakota
+    "https://minotdailynews.com/feed/",
+    "https://willistonherald.com/feed/",
+    "https://newtownnews.com/feed/",
+    # Ohio
+    "https://morningjournal.com/feed/",
+    "https://limaohio.com/feed/",
+    "https://columbusmessenger.com/feed/",
+    "https://lcnewspapers.com/feed/",
+    # South Dakota
+    "https://bhpioneer.com/feed/",
+    "https://capitaljournal.com/feed/",
+    "https://madisondailyleader.com/feed/",
+    # Wisconsin
+    "https://beloitdailynews.com/feed/",
+    "https://dailycardinal.com/feed/",
+    "https://isthmus.com/rss/",
+    "https://southwestjournal.com/feed/"
+]
 
-newsapi = NewsApiClient(api_key=NEWSAPI_KEY)
-
-def fetch_midwest_news(count=10):
-    try:
-        # TEST QUERY — WILL RETURN ARTICLES
-        query = 'Iowa OR Illinois OR Indiana OR Wisconsin OR Minnesota OR Iowa OR South Dakota'
-        print(f"Fetching with query: {query}")
-        
-        articles = newsapi.get_everything(
-            q=query,
-            language='en',
-            page_size=count,
-            sort_by='publishedAt'  # Most recent first
-        )
-        
-        print(f"Success! Got {len(articles['articles'])} articles")
-        return [
-            {
-                'title': a['title'],
-                'description': a['description'] or 'No description',
-                'url': a['url'],
-                'published': a['publishedAt'][:10],
-                'source': a['source']['name']
-            }
-            for a in articles['articles']
-        ]
-    except Exception as e:
-        print(f"API Error: {str(e)}")
-        print(traceback.format_exc())
-        return []
+def fetch_rss_articles():
+    articles = []
+    for url in RSS_FEEDS:
+        try:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:3]:  # 3 per paper for balance
+                published = entry.get('published', 'Unknown')[:10]
+                description = (entry.summary or '').split('<')[0][:150] + '...' if len(entry.summary or '') > 150 else entry.summary or 'No description'
+                articles.append({
+                    'title': entry.title,
+                    'description': description,
+                    'url': entry.link,
+                    'published': published,
+                    'source': feed.feed.get('title', 'Local Paper')
+                })
+        except Exception:
+            continue  # Skip dead feeds
+    # Sort by date (newest first), limit to 20
+    articles.sort(key=lambda x: x['published'], reverse=True)
+    return articles[:20]
 
 @app.route('/')
 def home():
-    print("Page loaded — fetching news...")
-    news = fetch_midwest_news()
+    news = fetch_rss_articles()
     return render_template('index.html', news=news)
 
 if __name__ == '__main__':
