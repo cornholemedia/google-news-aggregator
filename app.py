@@ -10,16 +10,17 @@ newsapi = NewsApiClient(api_key=NEWSAPI_KEY)
 
 def fetch_midwest_news(count=10):
     try:
-        # Simple query for Midwest local, fun, business stories; excludes unwanted topics
-        query = '("Midwest local" OR business OR fun) (Illinois OR Indiana OR Iowa OR Kansas OR Michigan OR Minnesota OR Missouri OR Nebraska OR "North Dakota" OR Ohio OR "South Dakota" OR Wisconsin)'
-        print(f"Fetching news with query: {query}")  # Debug log
+        # Super simple query to test NewsAPI
+        query = 'Midwest local OR business OR fun'
+        print(f"API Key starts with: {NEWSAPI_KEY[:8]}...")  # Debug: check key
+        print(f"Fetching news with query: {query}")
         articles = newsapi.get_everything(
             q=query,
             language='en',
             page_size=count,
             sort_by='relevancy'
         )
-        print(f"Got {len(articles['articles'])} articles")  # Debug log
+        print(f"Got {len(articles['articles'])} articles")
         return [{'title': article['title'], 'description': article['description'] or 'No description', 'url': article['url'], 'published': article['publishedAt'], 'source': article['source']['name']} for article in articles['articles']]
     except Exception as e:
         print(f"Error fetching news: {str(e)}")
@@ -28,9 +29,9 @@ def fetch_midwest_news(count=10):
 
 @app.route('/')
 def home():
-    print("Handling request to /")  # Debug log
+    print("Handling request to /")
     news = fetch_midwest_news()
-    print(f"Rendering {len(news)} articles")  # Debug log
+    print(f"Rendering {len(news)} articles")
     return render_template('index.html', news=news)
 
 if __name__ == '__main__':
