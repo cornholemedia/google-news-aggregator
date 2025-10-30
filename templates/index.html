@@ -1,31 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Midwest News Aggregator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midwest Heartland News</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .source { font-size: 0.9em; color: #666; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #000;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        a {
+            color: #000;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .header {
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: normal;
+        }
+        .nav {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .nav a {
+            margin-right: 10px;
+        }
+        .login {
+            float: right;
+            margin-top: -30px;
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
+        .rank {
+            width: 20px;
+            text-align: right;
+            font-size: 12px;
+            color: #828282;
+            padding-right: 5px;
+        }
+        .title {
+            font-size: 13px;
+        }
+        .title a {
+            font-weight: bold;
+        }
+        .site {
+            color: #828282;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        .meta {
+            font-size: 11px;
+            color: #828282;
+        }
+        .meta a {
+            color: #828282;
+        }
+        .points {
+            padding-right: 10px;
+        }
+        .comments {
+            padding-left: 10px;
+        }
+        .moretext {
+            font-size: 11px;
+            color: #828282;
+            margin-top: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 12px;
+        }
+        .footer a {
+            margin-right: 10px;
+        }
+        .yc-promo {
+            margin: 20px 0;
+            font-size: 12px;
+            color: #828282;
+        }
+        .search {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
-    <h1>Midwest Local & Fun News</h1>
-    <p>Midwest News</p>
-    <ul>
-    {% for item in news %}
-        <li>
-            <a href="{{ item.url }}">{{ item.title }}</a><br>
-            {{ item.description }}<br>
-            <small class="source">From {{ item.source }} ({{ item.published[:10] }})</small>
-        </li>
-    {% endfor %}
-    </ul>
+    <div class="header">
+        <h1><a href="/">Midwest Heartland News</a></h1>
+        <div class="nav">
+            <a href="/">news</a>
+            <a href="/?sort=new">new</a> |
+            <a href="/">past</a> |
+            <a href="/comments">comments</a> |
+            <a href="/ask">ask</a> |
+            <a href="/show">show</a> |
+            <a href="/jobs">jobs</a> |
+            <a href="/submit">submit</a>
+        </div>
+        <div class="login">
+            <a href="/login">login</a>
+        </div>
+    </div>
+
+    <table>
+        {% for article in news %}
+        <tr>
+            <td class="rank">{{ loop.index }}.</td>
+            <td class="title">
+                <a href="{{ article.url }}" target="_blank">{{ article.title }}</a>
+                <span class="site">({{ article.source }})</span>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="meta">
+                <span class="points">{{ (10 * loop.index) }} points</span>
+                by <a href="#">{{ article.source }}</a>
+                <span class="points">{{ article.published }}</span> |
+                <a href="#">hide</a> |
+                <a href="#">{{ (5 * loop.index) }} comments</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
     {% if not news %}
-        <p>No fresh stories right now—refresh for updates!</p>
+    <p style="text-align: center; color: #828282; font-size: 12px; margin-top: 20px;">No fresh stories right now—refresh for updates!</p>
     {% endif %}
+
+    <div class="yc-promo">
+        <a href="#">Heartland stories: farms, festivals, and hometown heroes</a>
+    </div>
+
+    <div class="footer">
+        <a href="#">Guidelines</a> |
+        <a href="#">FAQ</a> |
+        <a href="#">Lists</a> |
+        <a href="#">API</a> |
+        <a href="#">Legal</a> |
+        <a href="#">Contact</a>
+    </div>
+
+    <div class="search">
+        Search: <input type="text" placeholder="e.g., Iowa farm festival" style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">
+    </div>
 </body>
 </html>
