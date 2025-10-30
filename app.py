@@ -60,8 +60,8 @@ def fetch_rss_articles():
 
 @app.route('/')
 def home():
-    news = fetch_rss_articles()
+    sort = request.args.get('sort', 'recent')  # HN-style ?sort=new
+    news = fetch_rss_articles()  # Your existing function
+    if sort == 'new':
+        news = sorted(news, key=lambda x: x['published'], reverse=True)  # Already recent, but for demo
     return render_template('index.html', news=news)
-
-if __name__ == '__main__':
-    app.run()
